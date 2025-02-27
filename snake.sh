@@ -11,6 +11,8 @@
 # Licensed under GPL (see /usr/share/common-licenses/GPL for more details
 # or contact # the Free Software Foundation for a copy)
 
+resize -s 24 80
+
 #general variables
 WIDTH=$(tput cols)								#screen width
 HEIGHT=$(tput lines)							#screen height
