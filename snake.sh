@@ -11,16 +11,18 @@
 # Licensed under GPL (see /usr/share/common-licenses/GPL for more details
 # or contact # the Free Software Foundation for a copy)
 
-resize -s 24 80
-
 #general variables
-WIDTH=$(tput cols)								#screen width
-HEIGHT=$(tput lines)							#screen height
-HEIGHT=$[HEIGHT-1]								#board width (last line is for score)
-WIDTH=$[WIDTH/2*2]								#board height (board bust be 2|WIDTH)
-INITIAL_TICK_TIME=0.1							#time between snake updates
-INITIAL_FOOD_RATE=$[((WIDTH*HEIGHT/1000))]		#quantity of food at the beggining
+function initialize_variables() {
+	WIDTH=$(tput cols)								#screen width
+	HEIGHT=$(tput lines)							#screen height
+	HEIGHT=$[HEIGHT-1]								#board width (last line is for score)
+	WIDTH=$[WIDTH/2*2]								#board height (board bust be 2|WIDTH)
+	INITIAL_TICK_TIME=0.1							#time between snake updates
+	INITIAL_FOOD_RATE=$(( (WIDTH*HEIGHT/1000) < 1 ? 1 : (WIDTH*HEIGHT/1000) ))		#quantity of food at the beginning, at least one
+}
 declare -A FOOD									#associative array, to search for food by coordinates
+
+initialize_variables
 
 #handling console setup
 CMD_INITIAL_SETUP=$(stty -g)
@@ -92,17 +94,15 @@ function draw_board() {
 	local x y cy cx
 	cx=$[WIDTH/2]
 	cy=$[HEIGHT/2]
-	printf "\e[30;1m"
+	printf "\e[34m"   #blue
 	for ((x=0;x<=$cx;x++))
 	do
 		printf  "\e[1;$[cx-x]f█\e[1;$[cx+x]f█" ; printf  "\e[$HEIGHT;$[cx-x]f█\e[$HEIGHT;$[cx+x]f█"
-		sleep 0.005
 	done
 	for ((y=0;y<=$cy;y++))
 	do
 		printf "\e[${y};1f█\e[${y};${WIDTH}f█\e[${y};2f█\e[${y};$[WIDTH-1]f█"
 		printf "\e[$[HEIGHT-y];1f█\e[$[HEIGHT-y];${WIDTH}f█\e[$[HEIGHT-y];2f█\e[$[HEIGHT-y];$[WIDTH-1]f█"
-		sleep 0.01
 	done
 	printf "\e[0m"
 }
@@ -113,6 +113,7 @@ function new_game() {
 	do 
 		unset FOOD[$i]
 	done
+	initialize_variables
 	HEAD_X=$[(WIDTH/4)*2+1] HEAD_Y=$[HEIGHT/2]					#start at the middle
 	OHEAD_X=$[(WIDTH/4)*2+1] OHEAD_Y=$[HEIGHT/2]
 	SNAKE=([0]="$HEAD_Y;$HEAD_X"  [1]="$HEAD_Y;$[HEAD_X+1]") 	#initialize snake array with head
@@ -216,6 +217,7 @@ function gen_initial_food() {
 	do
 		gen_new_food
 	done
+	
 }
 
 function gen_new_food() {
@@ -271,7 +273,7 @@ function clean() {
 
 #quit alert
 function quit() {
-	zenity --question --title "Exit" --text "Are you sure to quit?" --ok-label "Yes" --cancel-label "No" --width 300 --height 150
+	zenity --question --title "Exit" --text "Are you handsome?" --ok-label "No" --cancel-label "Yes" --width 300 --height 150
 	[[ $? -eq 0 ]] && kill -s INT $$
 }
 
@@ -280,16 +282,18 @@ function help() {
 	zenity --info --title "Help" --width 300 --height 150 --text "Eat apples, grow longer
 And watch out for walls and your own body!
 
-Arrows - movement
-Q - exit"
+Arrows	- movement
+Q 		- exit
+
+Resizing the window between games will change board size"
 }
 
 #info window
 function info() {
-	zenity --info --title "Info" --text "!" --width 500 --height 150 --text "Author: Adrian Szwaczyk 193233 (adrianszwaczyk@gmail.com)
-Created On: 05.05.2023
-Last Modified On: 09.05.2023 
-Version: 1.0
+	zenity --info --title "Info" --text "!" --width 500 --height 150 --text "Author: Adrian Szwaczyk
+Created On: 		05.05.2023
+Last Modified On: 	09.05.2023 
+Version: 			1.0
 
 Description:
 Bash implementation of a classic game "Snake"
@@ -300,29 +304,29 @@ or contact # the Free Software Foundation for a copy)"
 
 #title screen ascii art
 {
-	TITLE_SCREEN[0]='\e[1;35m ________       ________       ________      ___  ___       _______      \e[0m'
-	TITLE_SCREEN[1]='\e[1;35m|\   ____\     |\   ___  \    |\   __  \    |\  \|\  \     |\  ___ \     \e[0m'
-	TITLE_SCREEN[2]='\e[1;35m\ \  \___|_    \ \  \\\ \  \   \ \  \|\  \   \ \  \/  /|_   \ \   __/|    \e[0m'
-	TITLE_SCREEN[3]='\e[1;35m \ \_____  \    \ \  \\\ \  \   \ \   __  \   \ \   ___  \   \ \  \_|/__  \e[0m'
-	TITLE_SCREEN[4]='\e[1;35m  \|____|\  \    \ \  \\\ \  \   \ \  \ \  \   \ \  \\\ \  \   \ \  \_|\ \ \e[0m'
-	TITLE_SCREEN[5]='\e[1;35m    |\_______\    \ \__\\\ \__\   \ \__\ \__\   \ \__\\\ \__\   \ \_______\\\e[0m'
-	TITLE_SCREEN[6]='\e[1;35m    \|_______|     \|__| \|__|    \|__|\|__|    \|__| \|__|    \|_______|\e[0m'
-	TITLE_SCREEN[7]='\e[1;35m                                                                         \e[0m'
-	TITLE_SCREEN[8]='\e[1;37m                          PRESS ANY KEY TO START                         \e[0m'
-	TITLE_SCREEN[9]='\e[1;37m  i - info                       h - help                      q - quit  \e[0m'
+	TITLE_SCREEN[0]='\e[1;35m  ________       ________       ________      ___  ___       _______      		\e[0m'
+	TITLE_SCREEN[1]='\e[1;35m |\   ____\     |\   ___  \    |\   __  \    |\  \|\  \     |\  ____\     		\e[0m'
+	TITLE_SCREEN[2]='\e[1;35m \ \  \___|_    \ \  \\\ \  \   \ \  \|\  \   \ \  \/  /__   \ \ \___|  		\e[0m'
+	TITLE_SCREEN[3]='\e[1;35m  \ \_____  \    \ \  \\\ \  \   \ \   __  \   \ \   ___  \   \ \  ___\ 		\e[0m'
+	TITLE_SCREEN[4]='\e[1;35m   \|____|\  \    \ \  \\\ \  \   \ \  \ \  \   \ \  \\\ \  \   \ \ \__|__ 		\e[0m'
+	TITLE_SCREEN[5]='\e[1;35m     |\_______\    \ \__\\\ \__\   \ \__\ \__\   \ \__\\\ \__\   \ \______\ 	\e[0m'
+	TITLE_SCREEN[6]='\e[1;35m     \|_______|     \|__| \|__|    \|__|\|__|    \|__| \|__|    \|______|		\e[0m'
+	TITLE_SCREEN[7]='\e[1;35m                                                                          		\e[0m'
+	TITLE_SCREEN[8]='\e[1;37m                           PRESS ANY KEY TO START                         	\e[0m'
+	TITLE_SCREEN[9]='\e[1;37m  i - info                       h - help                      q - quit  	\e[0m'
 }
 
 #game over screen ascii art
 {
-	GAME_OVER[0]='\e[1;35m ________  ________  _____ ______   _______         ________  ___      ___ _______   ________     \e[0m'
-	GAME_OVER[1]='\e[0;35m|\   ____\|\   __  \|\   _ \  _   \|\  ___ \      |\   __  \|\  \    /  /|\  ___ \ |\   __  \    \e[0m'
-	GAME_OVER[2]='\e[1;35m\ \  \___|\ \  \|\  \ \  \\\\\__\ \  \ \   __/|     \ \  \|\  \ \  \  /  / | \   __/|\ \  \|\  \   \e[0m'
-	GAME_OVER[3]='\e[0;35m \ \  \  __\ \   __  \ \  \\\|__| \  \ \  \_|/__    \ \  \\ \\  \ \  \/  / / \ \  \_|/_\ \   _  _\  \e[0m'
-	GAME_OVER[4]='\e[1;35m  \ \  \|\  \ \  \ \  \ \  \    \ \  \ \  \_|\ \    \ \  \\ \\  \ \    / /   \ \  \_|\ \ \  \\\  \| \e[0m'
-	GAME_OVER[5]='\e[1;35m   \ \_______\ \__\ \__\ \__\    \ \__\ \_______\    \ \_______\ \__/ /     \ \_______\ \__\\\ _\ \e[0m'
-	GAME_OVER[6]='\e[1;35m    \|_______|\|__|\|__|\|__|     \|__|\|_______|     \|_______|\|__|/       \|_______|\|__|\|__|\e[0m'
-	GAME_OVER[7]='\e[1;35m                                                                                                 \e[0m'
-	GAME_OVER[8]='\e[1;37m                                 PRESS ANY KEY TO START A NEW GAME                               \e[0m'
+	GAME_OVER[0]='\e[1;35m  ________  ________  ____________   _______       ________  ___      ___ _______  ________     \e[0m'
+	GAME_OVER[1]='\e[0;35m |\   ____\|\   __  \|\   __   __  \|\  ____\     |\   __  \|\  \    /  /|\  ____\|\   __  \    \e[0m'
+	GAME_OVER[2]='\e[1;35m \ \  \___|\ \  \|\  \ \  \\ \\__\ \  \ \ \___|     \ \  \|\  \ \  \  /  / \ \ \___|\ \  \|\  \   \e[0m'
+	GAME_OVER[3]='\e[0;35m  \ \  \  __\ \   __  \ \  \\|__|\ \  \ \  ___\     \ \  \\ \\  \ \  \/  / / \ \  ___\\\ \   _  _\  \e[0m'
+	GAME_OVER[4]='\e[1;35m   \ \  \|\  \ \  \ \  \ \  \    \ \  \ \ \__|__    \ \  \\ \\  \ \    / /   \ \ \__|_\ \  \\\  \| \e[0m'
+	GAME_OVER[5]='\e[1;35m    \ \_______\ \__\ \__\ \__\    \ \__\ \______\    \ \_______\ \__/ /     \ \______\ \__\\\ _\ \e[0m'
+	GAME_OVER[6]='\e[1;35m     \|_______|\|__|\|__|\|__|     \|__|\|______|     \|_______|\|__|/       \|______|\|__|\|__|\e[0m'
+	GAME_OVER[7]='\e[1;35m                                                                                                  \e[0m'
+	GAME_OVER[8]='\e[1;37m                                  PRESS ANY KEY TO START A NEW GAME                               \e[0m'
 	GAME_OVER[9]='\e[1;37m  i - info                                   h - help                                  q - quit  \e[0m'
 }
 
